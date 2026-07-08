@@ -20,17 +20,20 @@ def _hdr(extra=""):
     return {"apikey":KEY,"Authorization":f"Bearer {KEY}",
             "Content-Type":"application/json","Prefer":p}
 
+def _check(r):
+    if not r.ok:
+        raise RuntimeError(f"{r.status_code}: {r.text[:250]}")
+    return r
+
 def upsert_dim(dim):
-    r=requests.post(f"{URL}/rest/v1/fund_dim?on_conflict=isin",
-                    headers=_hdr("return=representation"), json=[dim], timeout=60)
-    r.raise_for_status()
+    r=_check(requests.post(f"{URL}/rest/v1/fund_dim?on_conflict=isin",
+                    headers=_hdr("return=representation"), json=[dim], timeout=60))
     return r.json()[0]["fund_id"]
 
 def upsert_nav(rows):
     for i in range(0,len(rows),2000):
-        r=requests.post(f"{URL}/rest/v1/fund_nav?on_conflict=fund_id,obs_date",
-                        headers=_hdr(), json=rows[i:i+2000], timeout=90)
-        r.raise_for_status()
+        _check(requests.post(f"{URL}/rest/v1/fund_nav?on_conflict=fund_id,obs_date",
+                        headers=_hdr(), json=rows[i:i+2000], timeout=90))
 
 def main():
     if not DRY and (not URL or not KEY):
