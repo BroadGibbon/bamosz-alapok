@@ -18,7 +18,8 @@ START=os.environ.get("START") or (dt.date.today()-dt.timedelta(days=365*5+2)).st
 def _hdr(extra=""):
     p="resolution=merge-duplicates"+(","+extra if extra else "")
     return {"apikey":KEY,"Authorization":f"Bearer {KEY}",
-            "Content-Type":"application/json","Prefer":p}
+            "Content-Type":"application/json","Prefer":p,
+            "Accept-Profile":"public","Content-Profile":"public"}
 
 def _check(r):
     if not r.ok:
