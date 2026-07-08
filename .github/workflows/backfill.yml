@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       limit:
-        description: "Hány alapot dolgozzon fel? (üresen hagyva = mind)"
+        description: "Hány alapot? (üresen hagyva = MIND; teszthez írj pl. 5-öt)"
         required: false
-        default: "5"
+        default: ""
       start:
         description: "Legkorábbi dátum yy.mm.dd (üresen = ma mínusz 5 év)"
         required: false
