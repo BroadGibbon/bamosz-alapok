@@ -1,0 +1,31 @@
+name: BAMOSZ adatbetöltés
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Hány alapot dolgozzon fel? (üresen hagyva = mind)"
+        required: false
+        default: "5"
+      start:
+        description: "Legkorábbi dátum yy.mm.dd (üresen = ma mínusz 5 év)"
+        required: false
+        default: ""
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Betöltés futtatása
+        run: python load_supabase.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LIMIT: ${{ github.event.inputs.limit }}
+          START: ${{ github.event.inputs.start }}
