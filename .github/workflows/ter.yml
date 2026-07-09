@@ -1,0 +1,30 @@
+name: MNB TER betöltés
+
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: "A feltöltött TER CSV fájl neve a repóban"
+        required: false
+        default: "mnb_ter.csv"
+      year:
+        description: "Melyik év TER-e (pl. 2024)"
+        required: false
+        default: "2024"
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Betöltés
+        run: python load_ter.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          FILE: ${{ github.event.inputs.file }}
+          YEAR: ${{ github.event.inputs.year }}
