@@ -1,0 +1,48 @@
+name: 🕔 Napi adat-frissítés (BAMOSZ + EUR/USD + árfolyam)
+
+# Automatikus (ütemezett) + kézi indítás is.
+on:
+  schedule:
+    # Hétköznap 06:00 UTC (~08:00 CEST). A cron mindig UTC!
+    # A 30 napos ablak miatt egy-egy kihagyott nap is bepótlódik.
+    - cron: "0 6 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Hány napra visszamenőleg töltse a BAMOSZ friss adatokat?"
+        required: false
+        default: "30"
+
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+
+      - name: 1) BAMOSZ friss adatok (minden alap, csak az utóbbi napok)
+        run: |
+          export START=$(date -d "${DAYS:-30} days ago" '+%Y.%m.%d')
+          echo "BAMOSZ friss adatok innen: $START (minden alap)"
+          python load_supabase.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LIMIT: ""
+          DAYS: ${{ github.event.inputs.days }}
+
+      - name: 2) Kockázatmentes hozam (EUR + USD)
+        run: python load_riskfree_eurusd.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+      - name: 3) Árfolyamok (ECB, HUF-ra)
+        run: python load_fx.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
