@@ -437,6 +437,8 @@ select
   fl.turnover_cum_30d, fl.turnover_avg_30d, fl.turnover_cum_1y, fl.turnover_avg_1y,
   fl.turnover_cum_30d * fx.huf_per_unit  as turnover_cum_30d_huf,
   fl.turnover_cum_1y  * fx.huf_per_unit  as turnover_cum_1y_huf,
+  tw.turnover_3m  * fx.huf_per_unit      as turnover_cum_3m_huf,
+  tw.turnover_ytd * fx.huf_per_unit      as turnover_cum_ytd_huf,
   ra.rf_rate, ra.sharpe_1y, ra.sortino_1y,
   dr.max_drawdown, dr.peak_date, dr.trough_date,
   dr.decline_days, dr.recovery_date, dr.recovery_days,
@@ -461,6 +463,13 @@ left join lateral (
   where currency=d.currency and obs_date <= ld.d
   order by obs_date desc limit 1
 ) fx on true
+left join lateral (
+  select
+    sum(turnover) filter (where obs_date >= ld.d - interval '3 months') as turnover_3m,
+    sum(turnover) filter (where obs_date >= date_trunc('year', ld.d))    as turnover_ytd
+  from fund_nav
+  where fund_id = d.fund_id and turnover is not null and obs_date <= ld.d
+) tw on true
 left join fund_peer_group pg on pg.fund_id=d.fund_id;
 
 alter table fund_latest add primary key (fund_id);
